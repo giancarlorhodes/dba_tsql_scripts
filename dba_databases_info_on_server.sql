@@ -23,7 +23,7 @@ CREATE DATE: 8/26/2024
 */
 
 SELECT 
-    name AS DatabaseName,
+    d.name AS DatabaseName,
     CONVERT(VARCHAR, create_date, 100) AS CreationDate,
     suser_sname(owner_sid) AS DatabaseOwner,
     CAST(owner_sid AS BIGINT) AS OwnerSID_Decimal,
@@ -36,8 +36,8 @@ JOIN
 ON 
     d.database_id = f.database_id
 GROUP BY 
-    name, create_date, owner_sid, recovery_model_desc
+    d.name, create_date, owner_sid, recovery_model_desc
 ORDER BY 
-    name;
+     (SUM(size * 8) / 1024) desc, d.name;
 
 
