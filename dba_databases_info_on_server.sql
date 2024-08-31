@@ -25,7 +25,7 @@ CREATE DATE: 8/26/2024
 SELECT 
     d.name AS DatabaseName,
     CONVERT(VARCHAR, create_date, 100) AS CreationDate,
-    suser_sname(owner_sid) AS DatabaseOwner,
+    SUSER_SNAME(owner_sid) AS DatabaseOwner,
     CAST(owner_sid AS BIGINT) AS OwnerSID_Decimal,
     (SUM(size * 8) / 1024) AS DatabaseSizeMB,
     recovery_model_desc AS RecoveryModel
