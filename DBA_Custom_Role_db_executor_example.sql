@@ -1,20 +1,72 @@
+
+
+
+/*
+========================================================================================
+    -- SQL Server Permission Management Script for db_executor Role
+-- Author: Giancarlo Rhodes
+-- Date: 9/13/2024
+-- Description: This script is designed to manage and restrict the EXECUTE permissions for the 
+    `db_executor` role in the specified database
+	
+	
+    Description:
+    This script is designed to manage and restrict the EXECUTE permissions for the 
+    `db_executor` role in the specified database. The following operations are performed:
+
+    1. Revoke any inherited or broad EXECUTE permissions on all objects within the `dbo`
+       schema from the `db_executor` role. This ensures that the role does not have 
+       unintended permissions on other objects in the schema.
+
+    2. Explicitly grant EXECUTE permission on two specific objects: 
+        - The `dbo.GetPersonInfo` stored procedure.
+        - The `dbo.FNGetPersonId` scalar-valued function.
+       
+    3. Verify that the `db_executor` role has only the intended EXECUTE permissions by
+       querying the system views to list objects the role can execute.
+
+    Instructions:
+    - Before running the script, replace `[YourDatabaseName]` with the actual name of
+      your database.
+    - Review the permissions granted and ensure they match your security requirements.
+
+    Objects Affected:
+    - Stored Procedures:
+        1. dbo.GetPersonInfo
+    - Scalar-Valued Functions:
+        1. dbo.FNGetPersonId
+
+    Notes:
+    - The script ensures that `db_executor` does NOT have permissions on:
+        1. dbo.LaneSelections
+        2. dbo.DashBoardToRegistration
+        3. dbo.FnGetPrimaryConservationIdIfMerged
+
+========================================================================================
+*/
+
+
+
+
+
+
 USE [master]
 GO
 
 
 -- pre step if setting up the login at the server level and granting user basic db_reader at the database level 
-/****** Object:  Login [MDC\rptShootingRangeOps]    Script Date: 9/9/2024 8:22:00 AM ******/
-CREATE LOGIN [MDC\rptShootingRangeOps] FROM WINDOWS WITH DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english]
+/****** Object:  Login [somedomain\someuser]    Script Date: 9/9/2024 8:22:00 AM ******/
+CREATE LOGIN [somedomain\someuser] FROM WINDOWS WITH DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english]
 GO
 
 
-USE [ShootingRangeOperation]
+USE [MyDatabase]
 GO
-CREATE USER [MDC\rptShootingRangeOps] FOR LOGIN [MDC\rptShootingRangeOps]
+CREATE USER [somedomain\someuser] FOR LOGIN [somedomain\someuser]
 GO
-USE [ShootingRangeOperation]
+USE [MyDatabase]
 GO
-ALTER ROLE [db_datareader] ADD MEMBER [MDC\rptShootingRangeOps]
+ALTER ROLE [db_datareader] ADD MEMBER [somedomain\someuser]
 GO
 
 
@@ -29,7 +81,7 @@ GO
 -- Here’s a guide on how to create and manage a db_executor role:
 
 -- STEP #1 create the custom role of the database level
-USE [ShootingRangeOperation];
+USE [MyDatabase];
 CREATE ROLE db_executor;
 
 
@@ -37,7 +89,7 @@ CREATE ROLE db_executor;
 -- Now, grant the EXECUTE permission to this role on all stored procedures:
 -- This command gives the EXECUTE permission to all stored procedures and functions for any user assigned to the db_executor role.
 
-USE [ShootingRangeOperation]; 
+USE [MyDatabase]; 
 GRANT EXECUTE TO db_executor;
 
 
@@ -47,8 +99,8 @@ GRANT EXECUTE TO db_executor;
 --   This adds the Domain\LoginName user to the db_executor role, granting them the ability to execute stored procedures.
 
 
-USE [ShootingRangeOperation];
-EXEC sp_addrolemember 'db_executor', 'MDC\rptShootingRangeOps';
+USE [MyDatabase];
+EXEC sp_addrolemember 'db_executor', 'somedomain\someuser';
 
 
 
@@ -59,7 +111,7 @@ EXEC sp_addrolemember 'db_executor', 'MDC\rptShootingRangeOps';
 -- application role within the context of the database
 
 
- USE [ShootingRangeOperation];
+ USE [MyDatabase];
 SELECT 
     DP1.name AS DatabaseRoleName,  
     DP2.name AS MemberName
@@ -80,10 +132,10 @@ WHERE
 --- SQL Server allows you to impersonate another user with the EXECUTE AS statement. This is a great 
 --- way to test permissions without needing the actual password.
 
-USE [ShootingRangeOperation];
-EXECUTE AS LOGIN = 'MDC\rptShootingRangeOps';  
+USE [MyDatabase];
+EXECUTE AS LOGIN = 'somedomain\someuser';  
 
-USE [ShootingRangeOperation]
+USE [MyDatabase]
 GO
 
 DECLARE	@return_value int
@@ -105,7 +157,7 @@ REVERT
 
 
 --- ANOTHER SIMPLER WAY TO VERIFY db_executor is set up correctly
-USE [ShootingRangeOperation];  -- Use the relevant database
+USE [MyDatabase];  -- Use the relevant database
 -- show the properties of the new role
 SELECT 
     dp.name AS PrincipalName,
@@ -124,7 +176,7 @@ WHERE
 
 
 --- lists users of the custom role
-USE [ShootingRangeOperation];  -- Use the relevant database
+USE [MyDatabase];  -- Use the relevant database
 
 SELECT 
     dp2.name AS UserName,       -- The name of the user or login
@@ -151,7 +203,7 @@ WHERE
 -- First, revoke any existing EXECUTE permissions from the db_executor role to ensure it 
 -- doesn't have permissions on all procedures/functions.
 
-USE [ShootingRangeOperation];
+USE [MyDatabase];
 
 -- Revoke EXECUTE on all procedures and functions from db_executor
 REVOKE EXECUTE ON SCHEMA::dbo FROM db_executor;
@@ -162,7 +214,7 @@ REVOKE EXECUTE ON SCHEMA::dbo FROM db_executor;
 -- Now, you can explicitly grant EXECUTE permission on the desired objects (dbo.GetPersonInfo and dbo.FNGetPersonId).
 
 
-USE [ShootingRangeOperation];
+USE [MyDatabase];
 
 -- Grant EXECUTE on the dbo.GetPersonInfo stored procedure
 GRANT EXECUTE ON OBJECT::dbo.GetPersonInfo TO db_executor;
@@ -189,7 +241,7 @@ GRANT EXECUTE ON OBJECT::dbo.FNGetPersonId TO db_executor;
 -- to all stored procedures or functions without being tied to specific objects.
 
 
-USE [ShootingRangeOperation];
+USE [MyDatabase];
 
 SELECT 
     dp.name AS PrincipalName,
