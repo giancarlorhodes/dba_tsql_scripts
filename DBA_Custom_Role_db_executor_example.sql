@@ -1,13 +1,24 @@
 USE [master]
 GO
 
+
+-- pre step if setting up the login at the server level and granting user basic db_reader at the database level 
 /****** Object:  Login [MDC\rptShootingRangeOps]    Script Date: 9/9/2024 8:22:00 AM ******/
 CREATE LOGIN [MDC\rptShootingRangeOps] FROM WINDOWS WITH DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english]
 GO
 
 
-USE [ShootingRangeOperation];  
-GRANT EXECUTE TO [MDC\rptShootingRangeOps];
+USE [ShootingRangeOperation]
+GO
+CREATE USER [MDC\rptShootingRangeOps] FOR LOGIN [MDC\rptShootingRangeOps]
+GO
+USE [ShootingRangeOperation]
+GO
+ALTER ROLE [db_datareader] ADD MEMBER [MDC\rptShootingRangeOps]
+GO
+
+
+
 
 
 --- create a custom role
@@ -176,8 +187,6 @@ GRANT EXECUTE ON OBJECT::dbo.FNGetPersonId TO db_executor;
 -- granted EXECUTE permissions on specific objects. In SQL Server, when a custom role like db_executor is 
 -- created and EXECUTE permissions are granted on the database level, those permissions might apply implicitly 
 -- to all stored procedures or functions without being tied to specific objects.
-
-
 
 
 USE [ShootingRangeOperation];
