@@ -1,11 +1,10 @@
 
 /*
 ========================================================================================
-    -- SQL Server CPU and Memory stats
+-- SQL Server CPU and Memory stats
 -- Author: Giancarlo Rhodes
 -- Date: 9/13/2024
 -- Description: SQL Server CPU and Memory stats
-
 
 Query to retrieve SQL Server instance information, including CPU and memory details, 
 and maximum server memory setting. 
@@ -36,3 +35,6 @@ SELECT
     virtual_machine_type_desc,
     CAST((SELECT value_in_use FROM sys.configurations WHERE name = 'max server memory (MB)') AS INT) AS max_server_memory_mb -- Explicit conversion to INT
 FROM sys.dm_os_sys_info;
+
+
+
