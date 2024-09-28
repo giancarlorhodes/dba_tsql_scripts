@@ -4,9 +4,9 @@ GO
 CREATE DATABASE [MdcStandard]
  CONTAINMENT = NONE
  ON  PRIMARY 
-( NAME = N'MdcStandard', FILENAME = N'D:\TEST\Data\MdcStandard.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
+( NAME = N'MdcStandard', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL16.SQLSERVER22\MSSQL\DATA\MdcStandard.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
  LOG ON 
-( NAME = N'MdcStandard_log', FILENAME = N'E:\TEST\Logs\MdcStandard_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
+( NAME = N'MdcStandard_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL16.SQLSERVER22\MSSQL\DATA\MdcStandard_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
  WITH CATALOG_COLLATION = DATABASE_DEFAULT
 GO
 ALTER DATABASE [MdcStandard] SET COMPATIBILITY_LEVEL = 150
@@ -394,59 +394,75 @@ GROUP BY tblOrderDetails.OrderID
 
 
 GO
-/****** Object:  View [dbo].[Orders Qry]    Script Date: 9/27/2024 6:35:47 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 
-create view [dbo].[Orders Qry] AS
-SELECT Orders.OrderID, Orders.CustomerID, Orders.EmployeeID, Orders.OrderDate, Orders.RequiredDate, 
-	Orders.ShippedDate, Orders.ShipVia, Orders.Freight, Orders.ShipName, Orders.ShipAddress, Orders.ShipCity, 
-	Orders.ShipRegion, Orders.ShipPostalCode, Orders.ShipCountry, 
-	Customers.CompanyName, Customers.Address, Customers.City, Customers.Region, Customers.PostalCode, Customers.Country
-FROM Customers INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID
-GO
-/****** Object:  View [dbo].[Product Sales for 1997]    Script Date: 9/27/2024 6:35:47 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 
-create view [dbo].[Product Sales for 1997] AS
-SELECT Categories.CategoryName, Products.ProductName, 
-Sum(CONVERT(money,("Order Details".UnitPrice*Quantity*(1-Discount)/100))*100) AS ProductSales
-FROM (Categories INNER JOIN Products ON Categories.CategoryID = Products.CategoryID) 
-	INNER JOIN (Orders 
-		INNER JOIN "Order Details" ON Orders.OrderID = "Order Details".OrderID) 
-	ON Products.ProductID = "Order Details".ProductID
-WHERE (((Orders.ShippedDate) Between '19970101' And '19971231'))
-GROUP BY Categories.CategoryName, Products.ProductName
-GO
-/****** Object:  View [dbo].[Products Above Average Price]    Script Date: 9/27/2024 6:35:47 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+--/****** Object:  View [dbo].[Orders Qry]    Script Date: 9/27/2024 6:35:47 PM ******/
+--SET ANSI_NULLS ON
+--GO
+--SET QUOTED_IDENTIFIER ON
+--GO
 
-create view [dbo].[Products Above Average Price] AS
-SELECT Products.ProductName, Products.UnitPrice
-FROM Products
-WHERE Products.UnitPrice>(SELECT AVG(UnitPrice) From Products)
---ORDER BY Products.UnitPrice DESC
-GO
-/****** Object:  View [dbo].[Products by Category]    Script Date: 9/27/2024 6:35:47 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+--create view [dbo].[Orders Qry] AS
+--SELECT Orders.OrderID, Orders.CustomerID, Orders.EmployeeID, Orders.OrderDate, Orders.RequiredDate, 
+--	Orders.ShippedDate, Orders.ShipVia, Orders.Freight, Orders.ShipName, Orders.ShipAddress, Orders.ShipCity, 
+--	Orders.ShipRegion, Orders.ShipPostalCode, Orders.ShipCountry, 
+--	Customers.CompanyName, Customers.Address, Customers.City, Customers.Region, Customers.PostalCode, Customers.Country
+--FROM Customers INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID
+--GO
 
-create view [dbo].[Products by Category] AS
-SELECT Categories.CategoryName, Products.ProductName, Products.QuantityPerUnit, Products.UnitsInStock, Products.Discontinued
-FROM Categories INNER JOIN Products ON Categories.CategoryID = Products.CategoryID
-WHERE Products.Discontinued <> 1
---ORDER BY Categories.CategoryName, Products.ProductName
-GO
+
+
+--/****** Object:  View [dbo].[Product Sales for 1997]    Script Date: 9/27/2024 6:35:47 PM ******/
+--SET ANSI_NULLS ON
+--GO
+--SET QUOTED_IDENTIFIER ON
+--GO
+
+--create view [dbo].[Product Sales for 1997] AS
+--SELECT Categories.CategoryName, Products.ProductName, 
+--Sum(CONVERT(money,("Order Details".UnitPrice*Quantity*(1-Discount)/100))*100) AS ProductSales
+--FROM (Categories INNER JOIN Products ON Categories.CategoryID = Products.CategoryID) 
+--	INNER JOIN (Orders 
+--		INNER JOIN "Order Details" ON Orders.OrderID = "Order Details".OrderID) 
+--	ON Products.ProductID = "Order Details".ProductID
+--WHERE (((Orders.ShippedDate) Between '19970101' And '19971231'))
+--GROUP BY Categories.CategoryName, Products.ProductName
+--GO
+
+
+
+
+--/****** Object:  View [dbo].[Products Above Average Price]    Script Date: 9/27/2024 6:35:47 PM ******/
+--SET ANSI_NULLS ON
+--GO
+--SET QUOTED_IDENTIFIER ON
+--GO
+
+--create view [dbo].[Products Above Average Price] AS
+--SELECT Products.ProductName, Products.UnitPrice
+--FROM Products
+--WHERE Products.UnitPrice>(SELECT AVG(UnitPrice) From Products)
+----ORDER BY Products.UnitPrice DESC
+--GO
+
+
+
+
+--/****** Object:  View [dbo].[Products by Category]    Script Date: 9/27/2024 6:35:47 PM ******/
+--SET ANSI_NULLS ON
+--GO
+--SET QUOTED_IDENTIFIER ON
+--GO
+
+--create view [dbo].[Products by Category] AS
+--SELECT Categories.CategoryName, Products.ProductName, Products.QuantityPerUnit, Products.UnitsInStock, Products.Discontinued
+--FROM Categories INNER JOIN Products ON Categories.CategoryID = Products.CategoryID
+--WHERE Products.Discontinued <> 1
+----ORDER BY Categories.CategoryName, Products.ProductName
+--GO
+
+
+
 /****** Object:  View [dbo].[Quarterly Orders]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -458,6 +474,11 @@ SELECT DISTINCT Customers.CustomerID, Customers.CompanyName, Customers.City, Cus
 FROM Customers RIGHT JOIN Orders ON Customers.CustomerID = Orders.CustomerID
 WHERE Orders.OrderDate BETWEEN '19970101' And '19971231'
 GO
+
+
+
+
+
 /****** Object:  View [dbo].[Sales by Category]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -476,6 +497,10 @@ WHERE Orders.OrderDate BETWEEN '19970101' And '19971231'
 GROUP BY Categories.CategoryID, Categories.CategoryName, Products.ProductName
 --ORDER BY Products.ProductName
 GO
+
+
+
+
 /****** Object:  View [dbo].[Sales Totals by Amount]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -489,6 +514,9 @@ FROM 	Customers INNER JOIN
 	ON Customers.CustomerID = Orders.CustomerID
 WHERE ("Order Subtotals".Subtotal >2500) AND (Orders.ShippedDate BETWEEN '19970101' And '19971231')
 GO
+
+
+
 /****** Object:  View [dbo].[Summary of Sales by Quarter]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -501,6 +529,10 @@ FROM Orders INNER JOIN "Order Subtotals" ON Orders.OrderID = "Order Subtotals".O
 WHERE Orders.ShippedDate IS NOT NULL
 --ORDER BY Orders.ShippedDate
 GO
+
+
+
+
 /****** Object:  View [dbo].[Summary of Sales by Year]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -513,6 +545,9 @@ FROM Orders INNER JOIN "Order Subtotals" ON Orders.OrderID = "Order Subtotals".O
 WHERE Orders.ShippedDate IS NOT NULL
 --ORDER BY Orders.ShippedDate
 GO
+
+
+
 /****** Object:  View [dbo].[vw_CustomerAndSuppliersByCity]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -527,6 +562,9 @@ UNION SELECT City, CompanyName, ContactName, 'Suppliers'
 FROM Suppliers
 --ORDER BY City, CompanyName
 GO
+
+
+
 /****** Object:  Table [dbo].[TableTest]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -541,6 +579,10 @@ CREATE TABLE [dbo].[TableTest](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
+
+
+
+
 /****** Object:  Table [dbo].[tblCategories]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -557,6 +599,9 @@ CREATE TABLE [dbo].[tblCategories](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
+
+
+
 /****** Object:  Table [dbo].[tblCustomerCustomerDemo]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -572,6 +617,9 @@ CREATE TABLE [dbo].[tblCustomerCustomerDemo](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+
+
+
 /****** Object:  Table [dbo].[tblCustomerDemographics]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -586,6 +634,10 @@ CREATE TABLE [dbo].[tblCustomerDemographics](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
+
+
+
+
 /****** Object:  Table [dbo].[tblEmployeeTerritories]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -601,6 +653,9 @@ CREATE TABLE [dbo].[tblEmployeeTerritories](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+
+
+
 /****** Object:  Table [dbo].[tblkRegion]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -615,6 +670,9 @@ CREATE TABLE [dbo].[tblkRegion](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+
+
+
 /****** Object:  Table [dbo].[tblkSuppliers]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -639,6 +697,9 @@ CREATE TABLE [dbo].[tblkSuppliers](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
+
+
+
 /****** Object:  Table [dbo].[tblkTerritories]    Script Date: 9/27/2024 6:35:47 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -656,6 +717,9 @@ CREATE TABLE [dbo].[tblkTerritories](
 GO
 SET ANSI_PADDING ON
 GO
+
+
+
 /****** Object:  Index [CategoryName]    Script Date: 9/27/2024 6:35:47 PM ******/
 CREATE NONCLUSTERED INDEX [CategoryName] ON [dbo].[tblCategories]
 (
