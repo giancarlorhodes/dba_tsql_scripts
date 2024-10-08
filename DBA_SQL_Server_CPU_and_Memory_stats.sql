@@ -38,3 +38,18 @@ FROM sys.dm_os_sys_info;
 
 
 
+
+SELECT
+
+	@@SERVERNAME AS Server_Name,  -- SQL Server instance name as Server_Name,
+	-- SERVERPROPERTY('InstanceName') AS 'Instance_Name',
+    SERVERPROPERTY('ProductVersion') AS 'SQL_Server_Version',
+    SERVERPROPERTY('ProductLevel') AS 'SQL_Server_Edition',
+    SERVERPROPERTY('Edition') AS 'SQL_Server_Edition_Detail',
+    SERVERPROPERTY('EngineEdition') AS 'SQL_Server_Engine_Edition',
+    cpu_count AS 'Number_of_Cores'
+
+FROM sys.dm_os_sys_info;
+
+
+
