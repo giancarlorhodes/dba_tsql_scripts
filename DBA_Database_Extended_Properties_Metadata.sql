@@ -38,20 +38,46 @@
 ----------------------------------------------------------------------------------
 */
 
+--- this show the recovery model for all databases on this server
+SELECT 
+    name AS DatabaseName, 
+    recovery_model_desc AS RecoveryModel
+FROM 
+    sys.databases;
 
+
+--Simple Recovery Model:
+--The transaction log is automatically truncated after each checkpoint (i.e., when the system saves data to disk).
+--This means the log doesn’t grow excessively, but you can't restore the database to a specific point in time.
+--Transaction log backups are not supported.
+--Full Recovery Model:
+--The transaction log keeps all records of transactions until a log backup is taken.
+--This allows for point-in-time recovery, meaning you can restore the database to any specific point before a failure.
+--The log continues to grow until it is manually truncated by backing up the log, and failure to manage log backups can lead to disk space issues.
 
 --- CHANGE THE MODEL FOR THE SERVER SO THAT EVERY DATABASE after this will be SIMPLE and have extended properties
 -- USE [Model]
-USE [GeotabAdapterOptimizerDb];
+
+-- change the system model 
+USE [Model]
 GO
 
-ALTER DATABASE [GeotabAdapterOptimizerDb]
---ALTER DATABASE  [Model]
+ALTER DATABASE  [Model]
 SET RECOVERY SIMPLE;
 GO
 
 
-USE [GeotabAdapterOptimizerDb];
+--- change recovery model for a specific database
+USE [WDST]
+GO
+
+ALTER DATABASE [WDST]
+SET RECOVERY SIMPLE;
+GO
+
+
+--- CHANGE THE MODEL FOR THE SERVER SO THAT EVERY DATABASE after this will be SIMPLE and have extended properties
+USE [Model]
 GO
 
 -- Add the 'Description' extended property
@@ -77,6 +103,55 @@ EXEC sys.sp_addextendedproperty
     @name = N'Comment', 
     @value = N'';
 GO
+
+
+
+--- specific database
+--USE [GeotabAdapterOptimizerDb];
+-- USE [Model]
+USE [WDST]
+GO
+
+-- Add the 'Description' extended property
+EXEC sys.sp_addextendedproperty 
+    @name = N'Description', 
+    @value = N'';
+GO
+
+-- Add the 'Owner' extended property
+EXEC sys.sp_addextendedproperty 
+    @name = N'Owner', 
+    @value = N'';
+GO
+
+-- Add the 'Compliance' extended property
+EXEC sys.sp_addextendedproperty 
+    @name = N'Compliance', 
+    @value = N'';
+GO
+
+-- Add the 'Comment' extended property
+EXEC sys.sp_addextendedproperty 
+    @name = N'Comment', 
+    @value = N'';
+GO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -205,3 +280,12 @@ SELECT * FROM #DatabaseProperties;
 -- Clean up the temporary table
 DROP TABLE #DatabaseProperties;
 GO
+
+
+
+--- add extended properties to all databases
+
+
+
+
+			
