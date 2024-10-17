@@ -1,4 +1,14 @@
-﻿
+﻿SQL141
+SQL142
+SQL14DR
+MDCBiData
+RSDB01\DEV
+RSDB01\TEST
+MDCRetro
+ReportSRV01
+TESTReportSRV01 
+CBCDB01\TEST (DONE) 
+CBCDB01\PROD (DONE)
 
 /*
 ----------------------------------------------------------------------------------
@@ -43,7 +53,9 @@ SELECT
     name AS DatabaseName, 
     recovery_model_desc AS RecoveryModel
 FROM 
-    sys.databases;
+    sys.databases
+WHERE 
+    name NOT IN ('master', 'msdb', 'tempdb');
 
 
 --Simple Recovery Model:
@@ -109,7 +121,24 @@ GO
 --- specific database
 --USE [GeotabAdapterOptimizerDb];
 -- USE [Model]
-USE [WDST]
+
+
+
+--USE ECS
+--USE FowlReport_Oracle
+--USE HED_Oracle
+--USE mdctables
+--USE MDCTABLES_Oracle
+--USE MOCOMPERM_Oracle
+--USE MOFOREST_Oracle
+--USE MOGOBBLE_Oracle
+--USE POS_AS400
+--USE POS_Combined
+--USE POS_Oracle
+--USE RAPTOR
+--USE RAPTOR_ORACLE
+--USE SURVEYS_Oracle
+USE Waterfowl_Oracle
 GO
 
 -- Add the 'Description' extended property
@@ -135,23 +164,6 @@ EXEC sys.sp_addextendedproperty
     @name = N'Comment', 
     @value = N'';
 GO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -215,7 +227,8 @@ AND ep.name IN ('Description', 'Owner', 'Compliance', 'Comment');
 
 
 
-
+--- this show all the extended properties for each database on a server, if there is properties it will be empty 
+-- otherwise it would be null
 -- Switch to the master database
 USE master;
 GO
@@ -280,7 +293,6 @@ SELECT * FROM #DatabaseProperties;
 -- Clean up the temporary table
 DROP TABLE #DatabaseProperties;
 GO
-
 
 
 --- add extended properties to all databases
