@@ -1,3 +1,6 @@
+
+
+
 /*
     Script to Retrieve Extended Properties from All Databases
 
@@ -62,85 +65,22 @@ BEGIN CATCH
 END CATCH;
 '
 FROM 
-    sys.databases;
-
--- Execute the dynamic SQL
-EXEC sp_executesql @SQL;
-
--- Select the results from the temporary table
-SELECT * FROM #ExtendedProperties;
-
--- Drop the temporary table
-DROP TABLE #ExtendedProperties;
-
-
-
-
-
-
---- working version v2
-DECLARE @SQL NVARCHAR(MAX);
-
--- Create a temporary table to store the results
-IF OBJECT_ID('tempdb..#ExtendedProperties') IS NOT NULL
-    DROP TABLE #ExtendedProperties;
-
-CREATE TABLE #ExtendedProperties
-(
-    DatabaseName SYSNAME,
-    ObjectClass NVARCHAR(100),
-    PropertyName NVARCHAR(100),
-    PropertyValue SQL_VARIANT
-);
-
--- Initialize dynamic SQL
-SET @SQL = '';
-
--- Build the dynamic SQL to run on all databases
-SELECT @SQL = @SQL + '
-BEGIN TRY
-    EXEC(''USE ' + QUOTENAME(name) + ';
-    INSERT INTO #ExtendedProperties (DatabaseName, ObjectClass, PropertyName, PropertyValue)
-    SELECT 
-        ''''' + QUOTENAME(name) + ''''' AS DatabaseName,
-        ep.class_desc AS ObjectClass,
-        ep.name AS PropertyName,
-        ep.value AS PropertyValue
-    FROM 
-        sys.extended_properties ep
-    WHERE 
-        ep.class = 0'')
-END TRY
-BEGIN CATCH
-    -- Handle errors for inaccessible databases
-    PRINT ''Could not access database: ' + name + '''
-END CATCH;
-'
-FROM 
-    sys.databases;
-
--- Execute the dynamic SQL
-EXEC sp_executesql @SQL;
-
-
-
--- Insert "No Extended Properties" for databases without any
-INSERT INTO #ExtendedProperties (DatabaseName, ObjectClass, PropertyName, PropertyValue)
-SELECT 
-    name, 
-    'DATABASE', 
-    'No Extended Properties', 
-    'No Extended Properties'
-FROM 
-    sys.databases 
+    sys.databases
 WHERE 
-    name NOT IN (SELECT DISTINCT DatabaseName FROM #ExtendedProperties);
+    name NOT IN ('master', 'msdb', 'tempdb'); -- Exclude system databases
+
+
+-- Execute the dynamic SQL
+EXEC sp_executesql @SQL;
 
 -- Select the results from the temporary table
 SELECT * FROM #ExtendedProperties;
 
 -- Drop the temporary table
 DROP TABLE #ExtendedProperties;
+
+
+
 
 
 

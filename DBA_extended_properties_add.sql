@@ -1,14 +1,18 @@
-﻿--SQL141
---SQL142
---SQL14DR
---MDCBiData
---RSDB01\DEV
---RSDB01\TEST
---MDCRetro
---ReportSRV01
---TESTReportSRV01 
---CBCDB01\TEST (DONE) 
---CBCDB01\PROD (DONE)
+﻿
+
+-- SQL141 (DONE)
+-- SQL142  (DONE)
+-- SQL14DR (DONE)
+-- MDCBiData (DONE)
+-- RSDB01\DEV (DONE)
+-- RSDB01\TEST (DONE)
+-- MDCRetro (DONE) 
+-- ReportSRV01
+-- TESTReportSRV01 
+-- CBCDB01\TEST (DONE) 
+-- CBCDB01\PROD (DONE)
+
+
 
 /*
 ----------------------------------------------------------------------------------
@@ -87,7 +91,7 @@ ALTER DATABASE [WDST]
 SET RECOVERY SIMPLE;
 GO
 
-
+--- THIS SHOULD BE DEFAULT OF EVERY SERVER
 --- CHANGE THE MODEL FOR THE SERVER SO THAT EVERY DATABASE after this will be SIMPLE and have extended properties
 USE [Model]
 GO
@@ -227,9 +231,14 @@ AND ep.name IN ('Description', 'Owner', 'Compliance', 'Comment');
 
 
 
+
+
+
 --- this show all the extended properties for each database on a server, if there is properties it will be empty 
 -- otherwise it would be null
 -- Switch to the master database
+
+
 USE master;
 GO
 
