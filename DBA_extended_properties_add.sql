@@ -7,10 +7,25 @@
 -- RSDB01\DEV (DONE)
 -- RSDB01\TEST (DONE)
 -- MDCRetro (DONE) 
--- ReportSRV01
--- TESTReportSRV01 
+-- ReportSRV01 (DONE)
+-- TESTReportSRV01 (DONE)
 -- CBCDB01\TEST (DONE) 
 -- CBCDB01\PROD (DONE)
+
+
+
+
+--TESTAppDB01\DEV  (DONE) 
+--TESTAppDB01\TEST (DONE)
+--AppDB01 (DONE)
+--SDEDEV2 (SKIPPED)
+--SDETEST2 (SKIPPED)
+--SDE2  (SKIPPED)
+--HRISDSQL (DONE)
+--TESTHRISDSQL  (DONE)
+--TESTSQL141 (DONE)
+--TESTSQL142 (DONE)
+--TESTSQL14DR (DONE)
 
 
 
@@ -62,34 +77,44 @@ WHERE
     name NOT IN ('master', 'msdb', 'tempdb');
 
 
---Simple Recovery Model:
---The transaction log is automatically truncated after each checkpoint (i.e., when the system saves data to disk).
---This means the log doesn’t grow excessively, but you can't restore the database to a specific point in time.
---Transaction log backups are not supported.
---Full Recovery Model:
---The transaction log keeps all records of transactions until a log backup is taken.
---This allows for point-in-time recovery, meaning you can restore the database to any specific point before a failure.
---The log continues to grow until it is manually truncated by backing up the log, and failure to manage log backups can lead to disk space issues.
-
---- CHANGE THE MODEL FOR THE SERVER SO THAT EVERY DATABASE after this will be SIMPLE and have extended properties
--- USE [Model]
-
--- change the system model 
-USE [Model]
-GO
-
-ALTER DATABASE  [Model]
-SET RECOVERY SIMPLE;
-GO
 
 
---- change recovery model for a specific database
-USE [WDST]
-GO
 
-ALTER DATABASE [WDST]
-SET RECOVERY SIMPLE;
-GO
+----Simple Recovery Model:
+----The transaction log is automatically truncated after each checkpoint (i.e., when the system saves data to disk).
+----This means the log doesn’t grow excessively, but you can't restore the database to a specific point in time.
+----Transaction log backups are not supported.
+----Full Recovery Model:
+----The transaction log keeps all records of transactions until a log backup is taken.
+----This allows for point-in-time recovery, meaning you can restore the database to any specific point before a failure.
+----The log continues to grow until it is manually truncated by backing up the log, and failure to manage log backups can lead to disk space issues.
+
+
+
+----- CHANGE THE MODEL FOR THE SERVER SO THAT EVERY DATABASE after this will be SIMPLE and have extended properties
+---- USE [Model]
+
+---- change the system model 
+--USE [Model]
+--GO
+
+--ALTER DATABASE  [Model]
+--SET RECOVERY SIMPLE;
+--GO
+
+
+----- change recovery model for a specific database
+--USE [WDST]
+--GO
+
+--ALTER DATABASE [WDST]
+--SET RECOVERY SIMPLE;
+--GO
+
+
+
+
+
 
 --- THIS SHOULD BE DEFAULT OF EVERY SERVER
 --- CHANGE THE MODEL FOR THE SERVER SO THAT EVERY DATABASE after this will be SIMPLE and have extended properties
@@ -125,9 +150,6 @@ GO
 --- specific database
 --USE [GeotabAdapterOptimizerDb];
 -- USE [Model]
-
-
-
 --USE ECS
 --USE FowlReport_Oracle
 --USE HED_Oracle
@@ -204,107 +226,194 @@ GO
 
 
 
-USE [MdcStandard];
-GO
 
-SELECT 
-    ep.name AS PropertyName, 
-    ep.value AS PropertyValue
-FROM sys.extended_properties ep
-WHERE ep.class = 0 -- 0 means it's a database-level property
-AND ep.name IN ('Description', 'Owner', 'Compliance', 'Comment');
+/*   v1  
+    Script to Add Extended Properties to All User Databases
 
+    This script adds four extended properties ('Description', 'Owner', 'Compliance', 'Comment') 
+    to every user database in the SQL Server instance, excluding system databases (master, 
+    tempdb, model, msdb). It uses a cursor to iterate over each database, switching context to 
+    each one and executing the `sys.sp_addextendedproperty` procedure for each property.
 
-USE MdcStandard;
-GO
+    The extended properties are initialized with empty values (`N''`), but this can be modified 
+    to set specific values for each database.
 
-SELECT 
-    DB_NAME() AS DatabaseName,
-    MAX(CASE WHEN ep.name = 'Description' THEN ep.value END) AS Description,
-    MAX(CASE WHEN ep.name = 'Owner' THEN ep.value END) AS Owner,
-    MAX(CASE WHEN ep.name = 'Compliance' THEN ep.value END) AS Compliance,
-    MAX(CASE WHEN ep.name = 'Comment' THEN ep.value END) AS Comment
-FROM sys.extended_properties ep
-WHERE ep.class = 0 -- 0 means it's a database-level property
-AND ep.name IN ('Description', 'Owner', 'Compliance', 'Comment');
+    Note:
+    - Excludes system databases: 'master', 'tempdb', 'model', 'msdb'.
+    - Ensures each database is online before applying the extended properties.
+*/
 
+DECLARE @dbname NVARCHAR(128);
 
-
-
-
-
-
---- this show all the extended properties for each database on a server, if there is properties it will be empty 
--- otherwise it would be null
--- Switch to the master database
-
-
-USE master;
-GO
-
--- Create a temporary table to store results
-IF OBJECT_ID('tempdb..#DatabaseProperties') IS NOT NULL
-    DROP TABLE #DatabaseProperties;
-
-CREATE TABLE #DatabaseProperties (
-    DatabaseName NVARCHAR(128),
-    Description NVARCHAR(MAX),
-    Owner NVARCHAR(MAX),
-    Compliance NVARCHAR(MAX),
-    Comment NVARCHAR(MAX)
-);
-
--- Declare a cursor to loop through all user databases
-DECLARE @DatabaseName NVARCHAR(128);
-DECLARE @sql NVARCHAR(MAX);
-
--- Declare a cursor to loop through all databases
-DECLARE db_cursor CURSOR FOR 
-SELECT name 
+-- Declare the cursor to loop through all user databases
+DECLARE db_cursor CURSOR FOR
+SELECT name
 FROM sys.databases
-WHERE database_id > 4; -- Exclude system databases
+WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb') -- Exclude system databases
+  AND state = 0; -- Ensure the database is online
 
 -- Open the cursor
 OPEN db_cursor;
-FETCH NEXT FROM db_cursor INTO @DatabaseName;
 
--- Loop through all databases
+-- Loop through all fetched databases
+FETCH NEXT FROM db_cursor INTO @dbname;
 WHILE @@FETCH_STATUS = 0
 BEGIN
-    -- Build the dynamic SQL to retrieve extended properties for each database
-    SET @sql = '
-    USE [' + @DatabaseName + '];
-    INSERT INTO #DatabaseProperties (DatabaseName, Description, Owner, Compliance, Comment)
-    SELECT 
-        DB_NAME() AS DatabaseName,
-        MAX(CASE WHEN ep.name = ''Description'' THEN CAST(ep.value AS NVARCHAR(MAX)) END) AS Description,
-        MAX(CASE WHEN ep.name = ''Owner'' THEN CAST(ep.value AS NVARCHAR(MAX)) END) AS Owner,
-        MAX(CASE WHEN ep.name = ''Compliance'' THEN CAST(ep.value AS NVARCHAR(MAX)) END) AS Compliance,
-        MAX(CASE WHEN ep.name = ''Comment'' THEN CAST(ep.value AS NVARCHAR(MAX)) END) AS Comment
-    FROM sys.extended_properties ep
-    WHERE ep.class = 0 
-    AND ep.name IN (''Description'', ''Owner'', ''Compliance'', ''Comment'');';
+    -- Switch to the current database and add the extended properties
+    EXEC('USE [' + @dbname + '];
 
-    -- Execute the dynamic SQL for the current database
-    EXEC sp_executesql @sql;
+    EXEC sys.sp_addextendedproperty 
+        @name = N''Description'', 
+        @value = N'''';
 
-    -- Fetch the next database
-    FETCH NEXT FROM db_cursor INTO @DatabaseName;
-END;
+    EXEC sys.sp_addextendedproperty 
+        @name = N''Owner'', 
+        @value = N'''';
 
--- Close and deallocate the cursor
+    EXEC sys.sp_addextendedproperty 
+        @name = N''Compliance'', 
+        @value = N'''';
+
+    EXEC sys.sp_addextendedproperty 
+        @name = N''Comment'', 
+        @value = N'''';
+    ');
+
+    -- Fetch the next database name
+    FETCH NEXT FROM db_cursor INTO @dbname;
+END
+
+-- Clean up
 CLOSE db_cursor;
 DEALLOCATE db_cursor;
 
+
+
+
+
+
+
+
+--  v2 with error catching
+DECLARE @dbname NVARCHAR(128);
+
+-- Declare the cursor to loop the through all user databases
+DECLARE db_cursor CURSOR FOR
+SELECT name
+FROM sys.databases
+WHERE name NOT IN ('master', 'tempdb', 'msdb') -- Exclude system databases
+  AND state = 0; -- Ensure the database is online
+
+-- Open the cursor
+OPEN db_cursor;
+
+-- Loop through all fetched databases
+FETCH NEXT FROM db_cursor INTO @dbname;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    BEGIN TRY
+        -- Switch to the current database and add the extended properties
+        EXEC('USE [' + @dbname + '];
+
+        EXEC sys.sp_addextendedproperty 
+            @name = N''Description'', 
+            @value = N'''';
+
+        EXEC sys.sp_addextendedproperty 
+            @name = N''Owner'', 
+            @value = N'''';
+
+        EXEC sys.sp_addextendedproperty 
+            @name = N''Compliance'', 
+            @value = N'''';
+
+        EXEC sys.sp_addextendedproperty 
+            @name = N''Comment'', 
+            @value = N'''';
+        ');
+    END TRY
+    BEGIN CATCH
+        -- If an error occurs, print the error message and continue to the next database
+        PRINT 'Error in database: ' + @dbname + ' - ' + ERROR_MESSAGE();
+    END CATCH;
+
+    -- Fetch the next database name
+    FETCH NEXT FROM db_cursor INTO @dbname;
+END
+
+-- Clean up
+CLOSE db_cursor;
+DEALLOCATE db_cursor;
+
+
+
+
+
+
+
+---  will list out all database and if they have extended properties or not
+-- V2   include all databases
+DECLARE @SQL NVARCHAR(MAX);
+
+-- Create a temporary table to store the results
+IF OBJECT_ID('tempdb..#ExtendedProperties') IS NOT NULL
+    DROP TABLE #ExtendedProperties;
+
+CREATE TABLE #ExtendedProperties
+(
+    DatabaseName SYSNAME,
+    ObjectClass NVARCHAR(100),
+    PropertyName NVARCHAR(100),
+    PropertyValue NVARCHAR(MAX)
+);
+
+-- Initialize dynamic SQL
+SET @SQL = '';
+
+-- Build the dynamic SQL to run on all databases
+SELECT @SQL = @SQL + '
+BEGIN TRY
+    EXEC(''USE ' + QUOTENAME(name) + ';
+    IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0)
+    BEGIN
+        INSERT INTO #ExtendedProperties (DatabaseName, ObjectClass, PropertyName, PropertyValue)
+        SELECT 
+            ''''' + QUOTENAME(name) + ''''' AS DatabaseName,
+            ep.class_desc AS ObjectClass,
+            ep.name AS PropertyName,
+            CAST(ep.value AS NVARCHAR(MAX)) AS PropertyValue
+        FROM 
+            sys.extended_properties ep
+        WHERE 
+            ep.class = 0;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO #ExtendedProperties (DatabaseName, ObjectClass, PropertyName, PropertyValue)
+        VALUES 
+            (''''' + QUOTENAME(name) + ''''', ''''DATABASE'''', ''''DOES NOT EXIST'''', ''''DOES NOT EXIST'''');
+    END'')
+END TRY
+BEGIN CATCH
+    -- Handle errors for inaccessible databases
+    PRINT ''Could not access database: ' + name + '''
+END CATCH;
+'
+FROM 
+    sys.databases
+WHERE 
+    name NOT IN ('master', 'msdb', 'tempdb'); -- Exclude system databases
+
+-- Execute the dynamic SQL
+EXEC sp_executesql @SQL;
+
 -- Select the results from the temporary table
-SELECT * FROM #DatabaseProperties;
+SELECT * FROM #ExtendedProperties;
 
--- Clean up the temporary table
-DROP TABLE #DatabaseProperties;
-GO
+-- Drop the temporary table
+DROP TABLE #ExtendedProperties;
 
 
---- add extended properties to all databases
 
 
 

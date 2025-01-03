@@ -1,6 +1,5 @@
 
 
-
 /*
     Script to Retrieve Extended Properties from All Databases
 
@@ -82,6 +81,69 @@ DROP TABLE #ExtendedProperties;
 
 
 
+
+
+
+-- V2   include all databases
+DECLARE @SQL NVARCHAR(MAX);
+
+-- Create a temporary table to store the results
+IF OBJECT_ID('tempdb..#ExtendedProperties') IS NOT NULL
+    DROP TABLE #ExtendedProperties;
+
+CREATE TABLE #ExtendedProperties
+(
+    DatabaseName SYSNAME,
+    ObjectClass NVARCHAR(100),
+    PropertyName NVARCHAR(100),
+    PropertyValue NVARCHAR(MAX)
+);
+
+-- Initialize dynamic SQL
+SET @SQL = '';
+
+-- Build the dynamic SQL to run on all databases
+SELECT @SQL = @SQL + '
+BEGIN TRY
+    EXEC(''USE ' + QUOTENAME(name) + ';
+    IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 0)
+    BEGIN
+        INSERT INTO #ExtendedProperties (DatabaseName, ObjectClass, PropertyName, PropertyValue)
+        SELECT 
+            ''''' + QUOTENAME(name) + ''''' AS DatabaseName,
+            ep.class_desc AS ObjectClass,
+            ep.name AS PropertyName,
+            CAST(ep.value AS NVARCHAR(MAX)) AS PropertyValue
+        FROM 
+            sys.extended_properties ep
+        WHERE 
+            ep.class = 0;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO #ExtendedProperties (DatabaseName, ObjectClass, PropertyName, PropertyValue)
+        VALUES 
+            (''''' + QUOTENAME(name) + ''''', ''''DATABASE'''', ''''DOES NOT EXIST'''', ''''DOES NOT EXIST'''');
+    END'')
+END TRY
+BEGIN CATCH
+    -- Handle errors for inaccessible databases
+    PRINT ''Could not access database: ' + name + '''
+END CATCH;
+'
+FROM 
+    sys.databases
+WHERE 
+    name NOT IN ('master', 'msdb', 'tempdb'); -- Exclude system databases
+
+-- Execute the dynamic SQL
+EXEC sp_executesql @SQL;
+
+-- Select the results from the temporary table
+SELECT * FROM #ExtendedProperties;
+
+-- Drop the temporary table
+DROP TABLE #ExtendedProperties;
 
 
 
