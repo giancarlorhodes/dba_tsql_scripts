@@ -44,7 +44,8 @@ SELECT
     l.type_desc AS LoginType,
     r.name AS ServerRole,
     l.create_date AS CreatedDate,
-    l.modify_date AS ModifiedDate
+    l.modify_date AS ModifiedDate,
+	SERVERPROPERTY('ServerName') AS ServerPropertyServerName
 FROM 
     sys.server_principals l
 INNER JOIN 
@@ -130,7 +131,8 @@ CREATE TABLE #DbOwnerMembers (
     LoginName NVARCHAR(256),
     RoleName NVARCHAR(256),
     DatabaseName NVARCHAR(256),
-    ServerName NVARCHAR(256)
+    ATATServerName NVARCHAR(256),
+	ServerPropertyServerName NVARCHAR(256)
 );
 
 SET @SQL = '';
@@ -138,12 +140,13 @@ SET @SQL = '';
 -- Loop through each database to query db_owners
 SELECT @SQL = @SQL + 
     'USE [' + name + '];
-    INSERT INTO #DbOwnerMembers (LoginName, RoleName, DatabaseName, ServerName)
+    INSERT INTO #DbOwnerMembers (LoginName, RoleName, DatabaseName, ATATServerName, ServerPropertyServerName)
     SELECT 
         SUSER_SNAME(p.sid) AS LoginName,
         r.name AS RoleName,
         DB_NAME() AS DatabaseName,
-        @@SERVERNAME AS ServerName
+        @@SERVERNAME AS ATATServerName,
+		CAST(SERVERPROPERTY(''ServerName'') AS NVARCHAR(256)) AS ServerPropertyServerName
     FROM sys.database_principals r
     INNER JOIN sys.database_role_members rm ON r.principal_id = rm.role_principal_id
     INNER JOIN sys.database_principals p ON rm.member_principal_id = p.principal_id
@@ -156,7 +159,7 @@ WHERE state_desc = 'ONLINE';
 EXEC sp_executesql @SQL;
 
 -- Select the combined results
-SELECT * FROM #DbOwnerMembers ORDER BY LoginName;
+SELECT * FROM #DbOwnerMembers WHERE LoginName IS NOT NULL ORDER BY DatabaseName, LoginName;
 
 -- Clean up the temporary table
 DROP TABLE #DbOwnerMembers;
