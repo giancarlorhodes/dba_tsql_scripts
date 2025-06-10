@@ -38,7 +38,6 @@ FROM sys.dm_os_sys_info;
 
 
 
-
 SELECT
 
 	@@SERVERNAME AS Server_Name,  -- SQL Server instance name as Server_Name,
